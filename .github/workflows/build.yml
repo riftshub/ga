@@ -17,13 +17,11 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install Project Dependencies (With Strict Legacy Fix)
-        run: npm install --legacy-peer-deps || npm install
+      - name: Install Project Dependencies
+        run: npm install
 
-      - name: Auto-Sanitize Deprecated Module Anchors
-        run: |
-          sed -i 's/mineflayer-util-plugin"));//g' ./src/entities.ts || true
-          sed -i 's/mineflayer-util-plugin"));//g' ./src/index.ts || true
+      - name: Force-Install Missing Mineflayer Plugin
+        run: npm install @nxg-org/mineflayer-util-plugin --legacy-peer-deps
 
       - name: Install Missing TS Execution Packages
         run: npm install -g tsx
