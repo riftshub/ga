@@ -1,0 +1,30 @@
+name: Mobile Game Build Compiler
+
+on:
+  push:
+    branches: [ main, master ] # Activates whenever you push code
+
+jobs:
+  compile_assets:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Engine
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Dependencies
+        run: npm ci || npm install
+
+      - name: Compile Minecraft Client
+        run: npm run build
+
+      - name: Create Downloadable Zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: finished-porkbun-game
+          path: dist/ # Bundles your compiled index.html and asset folder
+          
