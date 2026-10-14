@@ -1,0 +1,16 @@
+{
+  "name": "cars-and-guns-game",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Browser Minecraft client (client/) + unified game host (server/)",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "install:client": "cd client && corepack enable && pnpm install",
+    "install:server": "npm --prefix server install",
+    "build": "npm run install:client && npm run install:server && cd client && pnpm run build",
+    "start": "node server/server.js --prod",
+    "dev": "cd client && pnpm start"
+  }
+}
