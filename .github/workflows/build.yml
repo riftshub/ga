@@ -3,7 +3,7 @@ name: Compile Minecraft Game
 on:
   push:
     branches: [ main, master ]
-  workflow_dispatch: # Allows manual button forcing
+  workflow_dispatch: 
 
 jobs:
   build_game:
@@ -15,15 +15,20 @@ jobs:
       - name: Setup Node.js (Forcing Node 22+)
         uses: actions/setup-node@v4
         with:
-          node-version: 22 # Fixes the EBADENGINE warning
+          node-version: 22
 
-      - name: Install Project Dependencies
-        run: npm install
+      - name: Install Project Dependencies (With Strict Legacy Fix)
+        run: npm install --legacy-peer-deps || npm install
+
+      - name: Auto-Sanitize Deprecated Module Anchors
+        run: |
+          sed -i 's/mineflayer-util-plugin"));//g' ./src/entities.ts || true
+          sed -i 's/mineflayer-util-plugin"));//g' ./src/index.ts || true
 
       - name: Install Missing TS Execution Packages
-        run: npm install -g tsx # Fixes the '/bin/sh: 1: tsx: not found' error
+        run: npm install -g tsx
 
-      - name: Run Build Command
+      - name: Run Clean Build Command
         run: npm run build
 
       - name: Package Dist Folder
