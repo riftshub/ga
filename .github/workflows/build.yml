@@ -12,27 +12,33 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Install pnpm Package Manager
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9 # Loads the optimal pnpm version for modern packages
+
       - name: Setup Node.js (Forcing Node 22)
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: 'pnpm' # Caches dependencies to speed up the run
 
-      - name: Install Project Dependencies
-        run: npm install
+      - name: Install Project Dependencies (via pnpm)
+        run: pnpm install --no-frozen-lockfile
 
       - name: Force-Install Missing Mineflayer Plugin
-        run: npm install @nxg-org/mineflayer-util-plugin --legacy-peer-deps
+        run: pnpm add @nxg-org/mineflayer-util-plugin -D
 
       - name: Install Missing TS Execution Packages
-        run: npm install -g tsx
+        run: pnpm add -g tsx
 
-      - name: Run Clean Build (With High Memory Allocation & Dev-Flags)
+      - name: Run Clean Build (With Native pnpm Pipeline)
         env:
-          NODE_OPTIONS: "--max-old-space-size=4096" # Forces the runner to use up to 4GB of RAM
+          NODE_OPTIONS: "--max-old-space-size=4096"
           NODE_ENV: production
         run: |
-          npx update-browserslist-db@latest --yes # Updates the outdated browser database warning
-          npm run build
+          pnpm dlx update-browserslist-db@latest --yes
+          pnpm run build
 
       - name: Package Dist Folder
         uses: actions/upload-artifact@v4
