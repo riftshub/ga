@@ -1,0 +1,111 @@
+name: Release
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+  MAIN_MENU_LINKS: ${{ vars.MAIN_MENU_LINKS }}
+on:
+  push:
+    branches: [release]
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions: write-all
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@master
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+      - name: Install Global Dependencies
+        run: pnpm add -g vercel
+      # - run: pnpm install
+      # - run: pnpm build
+      - run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+      - run: node scripts/replaceFavicon.mjs ${{ secrets.FAVICON_MAIN }}
+      # will install + build to .vercel/output/static
+      - name: Get Release Info
+        run: pnpx zardoy-release empty --skip-github --output-file assets/release.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download Generated Sounds map
+        run: node scripts/downloadSoundsMap.mjs
+      - run: vercel build --token=${{ secrets.VERCEL_TOKEN }} --prod
+        env:
+          CONFIG_JSON_SOURCE: BUNDLED
+          LOCAL_CONFIG_FILE: config.mcraft-only.json
+
+      # publish to github
+      - run: cp vercel.json .vercel/output/static/vercel.json
+      - uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: .vercel/output/static
+          force_orphan: true
+
+      # Create CNAME file for custom domain
+      - name: Create CNAME file
+        run: echo "mcraft.fun" > .vercel/output/static/CNAME
+
+      - name: Deploy to mwc-mcraft-pages repository
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          personal_token: ${{ secrets.MCW_MCRAFT_PAGE_DEPLOY_TOKEN }}
+          external_repository: ${{ github.repository_owner }}/mwc-mcraft-pages
+          publish_dir: .vercel/output/static
+          publish_branch: main
+          destination_dir: docs
+          force_orphan: true
+
+      - name: Change index.html title
+        run: |
+          # change <title>Minecraft Web Client</title> to <title>Minecraft Web Client — Free Online Browser Version</title>
+          sed -i 's/<title>Minecraft Web Client<\/title>/<title>Minecraft Web Client — Free Online Browser Version<\/title>/' .vercel/output/static/index.html
+
+      - name: Deploy Project to Vercel
+        uses: mathiasvr/command-output@v2.0.0
+        with:
+          run: vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }} --prod
+        id: deploy
+      - name: Get releasing alias
+        run: node scripts/githubActions.mjs getReleasingAlias
+        id: alias
+      - name: Set deployment alias
+        run: |
+          for alias in $(echo ${{ steps.alias.outputs.alias }} | tr "," "\n"); do
+            vercel alias set ${{ steps.deploy.outputs.stdout }} $alias --token=${{ secrets.VERCEL_TOKEN }} --scope=zaro
+          done
+
+      - name: Build single-file version - minecraft.html
+        run: pnpm build-single-file && mv dist/single/index.html minecraft.html
+      - name: Build self-host version
+        run: pnpm build
+      - name: Bundle server.js
+        run: |
+          pnpm esbuild server.js --bundle --platform=node --outfile=bundled-server.js --define:process.env.NODE_ENV="'production'"
+
+      - name: Create zip package
+        run: |
+          mkdir -p package
+          cp -r dist package/
+          cp bundled-server.js package/server.js
+          cd package
+          zip -r ../self-host.zip .
+
+      - run: |
+          pnpx zardoy-release node --footer "This release URL: https://$(echo ${{ steps.alias.outputs.alias }} | cut -d',' -f1) (Vercel URL: ${{ steps.deploy.outputs.stdout }})"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # has possible output: tag
+        id: release
+
+      # has output
+      - name: Set publishing config
+        run: pnpm config set '//registry.npmjs.org/:_authToken' "${NODE_AUTH_TOKEN}"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      # - run: pnpm tsx scripts/buildNpmReact.ts ${{ steps.release.outputs.tag }}
+      #   if: steps.release.outputs.tag
+      #   env:
+      #     NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

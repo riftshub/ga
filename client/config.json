@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "defaultHost": "<from-proxy>",
+  "defaultProxy": "https://proxy.mcraft.fun",
+  "mapsProvider": "https://maps.mcraft.fun/",
+  "skinTexturesProxy": "",
+  "p2pRelayServer": "wss://p2p.mcraft.fun",
+  "promoteServers": [
+    {
+      "ip": "wss://trueelement.shop/mc",
+      "name": "True Element",
+      "description": "Cars & guns multiplayer world",
+      "version": "1.18"
+    }
+  ],
+  "rightSideText": "A Minecraft client clone in the browser!",
+  "splashText": "Mind the bugs and have fun!",
+  "splashTextFallback": "Welcome!",
+  "pauseLinks": [
+    [
+      {
+        "type": "github"
+      },
+      {
+        "type": "discord"
+      }
+    ]
+  ],
+  "defaultUsername": "mcrafter{0-9999}",
+  "mobileButtons": [
+    {
+      "action": "general.selectItem",
+      "actionHold": "",
+      "label": "S"
+    },
+    {
+      "action": "general.debugOverlay",
+      "actionHold": "general.debugOverlayHelpMenu",
+      "label": "F3"
+    },
+    {
+      "action": "general.playersList",
+      "actionHold": "",
+      "icon": "pixelarticons:users",
+      "label": "TAB"
+    },
+    {
+      "action": "general.chat",
+      "actionHold": "",
+      "label": ""
+    },
+    {
+      "action": "ui.pauseMenu",
+      "actionHold": "",
+      "label": ""
+    }
+  ],
+  "allowAutoConnect": true,
+  "multiplayerRoom": true
+}
