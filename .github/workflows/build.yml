@@ -12,7 +12,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js (Forcing Node 22+)
+      - name: Setup Node.js (Forcing Node 22)
         uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -26,8 +26,13 @@ jobs:
       - name: Install Missing TS Execution Packages
         run: npm install -g tsx
 
-      - name: Run Clean Build Command
-        run: npm run build
+      - name: Run Clean Build (With High Memory Allocation & Dev-Flags)
+        env:
+          NODE_OPTIONS: "--max-old-space-size=4096" # Forces the runner to use up to 4GB of RAM
+          NODE_ENV: production
+        run: |
+          npx update-browserslist-db@latest --yes # Updates the outdated browser database warning
+          npm run build
 
       - name: Package Dist Folder
         uses: actions/upload-artifact@v4
